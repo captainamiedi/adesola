@@ -36,7 +36,7 @@ lz4==4.3.2
 MarkupSafe
 marshmallow 
 marshmallow-enum 
-mkl-fft==1.3.1
+mkl-fft==1.3.0
 mkl-random 
 mkl-service==2.4.0
 monotonic==1.6
