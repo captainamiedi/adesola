@@ -19,6 +19,7 @@ from dotenv import dotenv_values
 
 
 config = dotenv_values(".env") 
+print(config)
 
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
 app = Flask(__name__)
