@@ -134,7 +134,7 @@ def question_answer():
         return resp
     if file and allowed_extension(file.filename):
         try:
-            pdf = PyPDF2.PdfFileReader(file)
+            pdf = PyPDF2.PdfReader(file)
             text = ''
             for page_num in range(pdf.numPages):
                 page = pdf.getPage(page_num)
