@@ -66,7 +66,7 @@ def upload_file():
             # Extract text from all the pages
             text = ''
             for page_num in range(number_of_pages):
-                page = reader.pages(page_num)
+                page = reader.pages[page_num]
                 text += page.extractText()
 
             texts = text_splitter.split_text(text)
@@ -138,7 +138,7 @@ def question_answer():
             number_of_pages = len(reader.pages)
             text = ''
             for page_num in range(number_of_pages):
-                page = reader.pages(page_num)
+                page = reader.pages[page_num]
                 text += page.extractText()
             
             texts = text_splitter.split_text(text)
