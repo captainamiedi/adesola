@@ -126,6 +126,7 @@ def question_answer():
         resp.status_code = 400
         return resp
     file = request.files['file']
+    print(file, 'upload file')
     if file.filename == '':
         resp = jsonify({'message': 'No file selected'})
         resp.status_code = 400
