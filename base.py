@@ -61,12 +61,12 @@ def upload_file():
         return resp
     if file and allowed_extension(file.filename):
         try:
-            pdf = PyPDF2.PdfReader(file)
-
+            reader = PyPDF2.PdfReader(file)
+            number_of_pages = len(reader.pages)
             # Extract text from all the pages
             text = ''
-            for page_num in range(pdf.numPages):
-                page = pdf.getPage(page_num)
+            for page_num in range(number_of_pages):
+                page = reader.pages(page_num)
                 text += page.extractText()
 
             texts = text_splitter.split_text(text)
@@ -134,10 +134,11 @@ def question_answer():
         return resp
     if file and allowed_extension(file.filename):
         try:
-            pdf = PyPDF2.PdfReader(file)
+            reader = PyPDF2.PdfReader(file)
+            number_of_pages = len(reader.pages)
             text = ''
-            for page_num in range(pdf.numPages):
-                page = pdf.getPage(page_num)
+            for page_num in range(number_of_pages):
+                page = reader.pages(page_num)
                 text += page.extractText()
             
             texts = text_splitter.split_text(text)
