@@ -121,6 +121,7 @@ def upload_media():
 
 @app.route('/question_answer/', methods=['POST'])
 def question_answer():
+    print(request.files, 'init')
     if 'file' not in request.files:
         resp = jsonify({'message': 'No file found'})
         resp.status_code = 400
