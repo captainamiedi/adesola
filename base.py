@@ -61,7 +61,7 @@ def upload_file():
         return resp
     if file and allowed_extension(file.filename):
         try:
-            pdf = PyPDF2.PdfFileReader(file)
+            pdf = PyPDF2.PdfReader(file)
 
             # Extract text from all the pages
             text = ''
