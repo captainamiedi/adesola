@@ -16,6 +16,7 @@ from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.chains import RetrievalQAWithSourcesChain
 from dotenv import dotenv_values
+from flask_cors import CORS
 
 
 config = dotenv_values(".env") 
@@ -23,6 +24,7 @@ print(config)
 
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
 app = Flask(__name__)
+CORS(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.environ["OPENAI_API_KEY"] = config['OPENAI_API_KEYS']
 
