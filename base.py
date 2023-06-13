@@ -17,11 +17,15 @@ from langchain.chains import RetrievalQA
 from langchain.chains import RetrievalQAWithSourcesChain
 from dotenv import dotenv_values
 from flask_cors import CORS
+import json
+from langchain.chains.qa_with_sources import load_qa_with_sources_chain
+from supabase import create_client, Client
+import QAEmbedding
 
 
 config = dotenv_values(".env") 
-print(config)
-
+# print(config)
+vectorDb = {}
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
 app = Flask(__name__)
 CORS(app)
@@ -33,10 +37,30 @@ ALLOWED_MEDIA_EXTENSION = set(['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm
 llm = OpenAI(openai_api_key=config['OPENAI_API_KEYS'],temperature=0)
 text_splitter = CharacterTextSplitter()
 openai.api_key = config['OPENAI_API_KEYS']
+supabase: Client = create_client(config['SUPABASE_PROJECT_URL'], config['SUPABASE_API_KEY'])
+embeddingDoc = QAEmbedding.User()
 
 # Load the Whisper model:
 # model = whisper.load_model('base')
 
+def authenticate():
+    try:
+
+        # Retrieve the access token from the request headers
+        access_token = request.headers.get('Authorization')
+        
+        data = supabase.auth.get_user(access_token)
+        request.user_id = data.user.id
+        # Check if the access token is valid and corresponds to an authenticated user
+        # Example: verify the access token against a database or JWT token
+
+        if access_token is None or not data:
+            # Return an error response if authentication fails
+            return jsonify({'error': 'Unauthorized access'}), 401
+    except Exception as exc:
+        return jsonify({'error': exc})
+    
+    # request.user_id = data.user.id
 
 def allowed_extension(filename):
     return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSION
@@ -50,7 +74,12 @@ def download_file(name):
 def welcome():
     return jsonify({'name': 'bright', 'address': 'here'})
 
-@app.route('/upload_file/', methods=['POST'])
+@app.before_request
+def before_request():
+    if request.path.startswith('/api'):
+        authenticate()
+        
+@app.route('/api/upload_file/', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
         resp = jsonify({'message': 'No file found'})
@@ -90,7 +119,7 @@ def upload_file():
         resp.status_code = 400
         return resp
 
-@app.route('/upload_media/', methods=['POST'])
+@app.route('/api/upload_media/', methods=['POST'])
 def upload_media():
     if 'file' not in request.files:
         resp = jsonify({'message': 'No file found'})
@@ -121,15 +150,15 @@ def upload_media():
         except Exception as exc:
             print('exception: %s' % exc)
 
-@app.route('/question_answer/', methods=['POST'])
+@app.route('/api/question_answer/', methods=['POST'])
 def question_answer():
-    print(request.files, 'init')
+    # print(request.files, 'init')
     if 'file' not in request.files:
         resp = jsonify({'message': 'No file found'})
         resp.status_code = 400
         return resp
     file = request.files['file']
-    print(file, 'upload file')
+    # print(file, 'upload file')
     if file.filename == '':
         resp = jsonify({'message': 'No file selected'})
         resp.status_code = 400
@@ -147,9 +176,12 @@ def question_answer():
             text_splitter1 = CharacterTextSplitter(chunk_size=1000, chunk_overlap=0)
             texts1 = text_splitter1.split_text(text)
             # docs = [Document(page_content=t) for t in texts1]
+            # print(docs, 'docs')
+            # vectorDb['userText'] = docs
+            # print(texts1, 'text')
             embeddings = OpenAIEmbeddings(openai_api_key=config['OPENAI_API_KEYS'])
-            docsearch = Chroma.from_texts(texts1, embeddings, metadatas=[{"source": f"{i}-pl"} for i in range(len(texts1))])
-            
+            docsearch = Chroma.from_texts(texts1, embeddings, metadatas=[{"source": str(i)} for i in range(len(texts1))])
+            print(docsearch, 'search')
             if request.form['type'] == 'question':
             # responseText = ''
                 for text in texts:
@@ -166,11 +198,67 @@ def question_answer():
                     )
                 return jsonify({'message': 'Generation Completed', 'data': response['choices'][0]['text']})
             chain = RetrievalQAWithSourcesChain.from_chain_type(OpenAI(temperature=0), chain_type="stuff", retriever=docsearch.as_retriever())
+            # data, count = supabase
+            # .table('countries')
+            # .insert({"id": 1, "name": "Denmark"})
+            # .execute()
+            # data, count = supabase.table('QuestionAndAnswerChain').insert({"content": vars(chain), 'userId': request.user_id, "document_name": file.name}).execute()
+            # print(chain)
+            # print(vars(chain), 'compare')
+            # print(type(chain))
             result = chain({"question": request.form['question']}, return_only_outputs=True)
-            return jsonify({'data': result})
+            merged_data = {
+                "merged": result["answer"] + " Sources: " + result["sources"]
+            }
+            return jsonify({'data': merged_data})
         except Exception as exc:
             print('exception', exc)
+
+@app.route('/api/answer/', methods=['POST'])
+def answer():
+    try:
+        user_id = request.user_id
+        response = supabase.table('QuestionAndAnswerChain').select('*').eq('userId', user_id).execute()
+        print(response, 'user id')
+        data = response.get('data')
+        # Process the data as needed
+        print(data)
+        result = vectorDb['userText']({"question": request.form['question']}, return_only_outputs=True)
+        merged_data = {
+            "merged": result["answer"] + " Sources: " + result["sources"]
+        }
+        return jsonify({'data': merged_data})
+    except Exception as exc:
+        print(exc)
+        return jsonify({'error': exc})
+    
+@app.route('/ap/embedding/doc', methods=['POST'])
+def embeddingDocUpload():
+    try:
+        files = request.files['file']
+        user_id = request.user_id
+        QAEmbedding.create_user_api(user_id)
+        resp = QAEmbedding.upload_and_embed_documents(user_id, files)
+        return jsonify({'data': resp})
+    except Exception as exc:
+        print(exc)
+
+@app.route('/ap/query/doc', methods=['POST'])
+def queryEmbeddingDoc():
+    try:
+        question = request.form['question']
+        user_id = request.user_id
+        resp = QAEmbedding.query_chain(user_id, question)
+        return jsonify({'data': resp})
+    except Exception as exc:
+        print(exc)
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port)
+
+
+# TODO
+# Prevent second embedding if first has been done
+# store doc search to supabase, set a field in supabase to embedding done.
+# determine the type of data in doc search
