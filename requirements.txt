@@ -50,8 +50,8 @@ numba==0.57.0
 numexpr 
 numpy 
 onnxruntime==1.15.0
-openai==0.27.7
-openai-whisper==20230314
+openai
+# openai-whisper==20230314
 openapi-schema-pydantic 
 overrides==7.3.1
 packaging
