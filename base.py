@@ -19,7 +19,7 @@ from dotenv import dotenv_values
 from flask_cors import CORS
 import json
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
-from supabase import create_client, Client
+# from supabase import create_client, Client
 import QAEmbedding
 
 
@@ -37,7 +37,7 @@ ALLOWED_MEDIA_EXTENSION = set(['mp3', 'mp4', 'mpeg', 'mpga', 'm4a', 'wav', 'webm
 llm = OpenAI(openai_api_key=config['OPENAI_API_KEYS'],temperature=0)
 text_splitter = CharacterTextSplitter()
 openai.api_key = config['OPENAI_API_KEYS']
-supabase: Client = create_client(config['SUPABASE_PROJECT_URL'], config['SUPABASE_API_KEY'])
+# supabase: Client = create_client(config['SUPABASE_PROJECT_URL'], config['SUPABASE_API_KEY'])
 embeddingDoc = QAEmbedding.User()
 
 # Load the Whisper model:
@@ -78,7 +78,7 @@ def welcome():
 def before_request():
     if request.path.startswith('/api'):
         authenticate()
-        
+
 @app.route('/api/upload_file/', methods=['POST'])
 def upload_file():
     if 'file' not in request.files:
@@ -218,7 +218,7 @@ def question_answer():
 def answer():
     try:
         user_id = request.user_id
-        response = supabase.table('QuestionAndAnswerChain').select('*').eq('userId', user_id).execute()
+        # response = supabase.table('QuestionAndAnswerChain').select('*').eq('userId', user_id).execute()
         print(response, 'user id')
         data = response.get('data')
         # Process the data as needed
