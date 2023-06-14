@@ -28,8 +28,10 @@ config = dotenv_values(".env")
 vectorDb = {}
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
 app = Flask(__name__)
-# CORS(app)
+# app.config['CORS_HEADERS'] = 'Content-Type'
+# cors = CORS(app, resources={r"/foo": {"origins": "http://localhost:port"}})
 CORS(app)
+# CORS(app, origins='*')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.environ["OPENAI_API_KEY"] = config['OPENAI_API_KEYS']
 
@@ -48,11 +50,13 @@ def authenticate():
     try:
 
         # Retrieve the access token from the request headers
-        access_token = request.headers.get('Authorization')
-        
-        data = supabase.auth.get_user(access_token)
-        print(data, 'data')
-        request.user_id = data.user.id
+        print(request.headers, 'header')
+        print(request.authorization, 'auth')
+        print(request.headers.get('Authorization'), 'token')
+        # access_token = request.headers.get('Authorization')
+        # data = supabase.auth.get_user(access_token)
+        # print(data, 'data')
+        # request.user_id = data.user.id
         # Check if the access token is valid and corresponds to an authenticated user
         # Example: verify the access token against a database or JWT token
 
@@ -76,10 +80,10 @@ def download_file(name):
 def welcome():
     return jsonify({'name': 'bright', 'address': 'here'})
 
-@app.before_request
-def before_request():
-    if request.path.startswith('/api'):
-        authenticate()
+# @app.before_request
+# def before_request():
+#     if request.path.startswith('/api'):
+#         authenticate()
 
 @app.route('/api/upload_file/', methods=['POST'])
 def upload_file():
@@ -108,7 +112,7 @@ def upload_file():
             # print(docs)
             chain = load_summarize_chain(llm, chain_type="refine", return_intermediate_steps=True)
             result = chain({"input_documents": docs}, return_only_outputs=True)
-            print(result)
+            # print(result)
             resp = jsonify({'message': 'Upload Successful', 'data': result})
             resp.status_code = 200
             return resp
@@ -144,7 +148,7 @@ def upload_media():
                 audio.export(temp_wav.name, format='wav')
                 temp_wav.close()
                 transcript = openai.Audio.transcribe('whisper-1', open(temp_wav.name, 'rb'))
-                print(transcript)
+                # print(transcript)
                 os.remove(temp_audio.name)
                 os.remove(temp_wav.name)
                 return jsonify({'data': transcript['text']})
@@ -183,7 +187,6 @@ def question_answer():
             # print(texts1, 'text')
             embeddings = OpenAIEmbeddings(openai_api_key=config['OPENAI_API_KEYS'])
             docsearch = Chroma.from_texts(texts1, embeddings, metadatas=[{"source": str(i)} for i in range(len(texts1))])
-            print(docsearch, 'search')
             if request.form['type'] == 'question':
             # responseText = ''
                 for text in texts:
@@ -235,11 +238,13 @@ def answer():
         return jsonify({'error': exc})
     
 @app.route('/api/embedding/doc', methods=['POST'])
-@cross_origin(origin='*')
+# @cross_origin(origin='localhost',headers=['Content- Type','Authorization'])
 def embeddingDocUpload():
     try:
+        access_token = request.headers.get('Authorization')
+        data = supabase.auth.get_user(access_token)
         files = request.files['file']
-        user_id = request.user_id
+        user_id = data.user.id
         QAEmbedding.create_user_api(user_id)
         resp = QAEmbedding.upload_and_embed_documents(user_id, files)
         return jsonify({'data': resp})
@@ -247,11 +252,13 @@ def embeddingDocUpload():
         print(exc)
 
 @app.route('/api/query/doc', methods=['POST'])
-@cross_origin(origin='*')
+# @cross_origin(origin='*')
 def queryEmbeddingDoc():
     try:
+        access_token = request.headers.get('Authorization')
+        data = supabase.auth.get_user(access_token)
         question = request.form['question']
-        user_id = request.user_id
+        user_id = data.user.id
         resp = QAEmbedding.query_chain(user_id, question)
         return jsonify({'data': resp})
     except Exception as exc:
@@ -259,7 +266,7 @@ def queryEmbeddingDoc():
 
 if __name__ == '__main__':
     port = int(os.environ.get('PORT', 8080))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=port, debug=True)
 
 
 # TODO
