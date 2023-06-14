@@ -16,7 +16,7 @@ from langchain.vectorstores import Chroma
 from langchain.chains import RetrievalQA
 from langchain.chains import RetrievalQAWithSourcesChain
 from dotenv import dotenv_values
-from flask_cors import CORS
+from flask_cors import CORS, cross_origin
 import json
 from langchain.chains.qa_with_sources import load_qa_with_sources_chain
 from supabase import create_client, Client
@@ -29,7 +29,7 @@ vectorDb = {}
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
 app = Flask(__name__)
 # CORS(app)
-CORS(app, origins='*')
+CORS(app)
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.environ["OPENAI_API_KEY"] = config['OPENAI_API_KEYS']
 
@@ -235,6 +235,7 @@ def answer():
         return jsonify({'error': exc})
     
 @app.route('/api/embedding/doc', methods=['POST'])
+@cross_origin(origin='*')
 def embeddingDocUpload():
     try:
         files = request.files['file']
@@ -246,6 +247,7 @@ def embeddingDocUpload():
         print(exc)
 
 @app.route('/api/query/doc', methods=['POST'])
+@cross_origin(origin='*')
 def queryEmbeddingDoc():
     try:
         question = request.form['question']
