@@ -50,6 +50,7 @@ def authenticate():
         access_token = request.headers.get('Authorization')
         
         data = supabase.auth.get_user(access_token)
+        print(data, 'data')
         request.user_id = data.user.id
         # Check if the access token is valid and corresponds to an authenticated user
         # Example: verify the access token against a database or JWT token
@@ -219,10 +220,10 @@ def answer():
     try:
         user_id = request.user_id
         # response = supabase.table('QuestionAndAnswerChain').select('*').eq('userId', user_id).execute()
-        print(response, 'user id')
-        data = response.get('data')
+        # print(response, 'user id')
+        # data = response.get('data')
         # Process the data as needed
-        print(data)
+        # print(data)
         result = vectorDb['userText']({"question": request.form['question']}, return_only_outputs=True)
         merged_data = {
             "merged": result["answer"] + " Sources: " + result["sources"]
@@ -232,7 +233,7 @@ def answer():
         print(exc)
         return jsonify({'error': exc})
     
-@app.route('/ap/embedding/doc', methods=['POST'])
+@app.route('/api/embedding/doc', methods=['POST'])
 def embeddingDocUpload():
     try:
         files = request.files['file']
@@ -243,7 +244,7 @@ def embeddingDocUpload():
     except Exception as exc:
         print(exc)
 
-@app.route('/ap/query/doc', methods=['POST'])
+@app.route('/api/query/doc', methods=['POST'])
 def queryEmbeddingDoc():
     try:
         question = request.form['question']
