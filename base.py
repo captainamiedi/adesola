@@ -28,7 +28,8 @@ config = dotenv_values(".env")
 vectorDb = {}
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
 app = Flask(__name__)
-CORS(app)
+# CORS(app)
+CORS(app, origins='*')
 app.config['UPLOAD_FOLDER'] = UPLOAD_FOLDER
 os.environ["OPENAI_API_KEY"] = config['OPENAI_API_KEYS']
 
