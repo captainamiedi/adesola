@@ -3,3 +3,8 @@ trainingDoc
 (NLS) CRIMINAL LITIGATION HANDOUT.pdf
 __pycache__
 .chroma
+.env
+# Elastic Beanstalk Files
+.elasticbeanstalk/*
+!.elasticbeanstalk/*.cfg.yml
+!.elasticbeanstalk/*.global.yml
