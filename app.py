@@ -27,7 +27,7 @@ config = dotenv_values(".env")
 # print(config)
 vectorDb = {}
 UPLOAD_FOLDER = 'C:/Users/HP/lawEmbedding2/upload'
-app = Flask(__name__)
+application = app  = Flask(__name__)
 # app.config['CORS_HEADERS'] = 'Content-Type'
 # cors = CORS(app, resources={r"/foo": {"origins": "http://localhost:port"}})
 CORS(app)
